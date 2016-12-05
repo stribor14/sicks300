@@ -341,7 +341,7 @@ int SerialCommS300::readData()
 
           // if protocol version allows it, read Scan number (time stamp)
           if(m_protocol == PROTOCOL_1_03){
-              m_scanNumber = htonl(*reinterpret_cast<unsigned int *> (&m_rxBuffer[14]));
+              m_scanNumber = *reinterpret_cast<unsigned int *> (&m_rxBuffer[14]);
           }
 
           memmove(m_rxBuffer, &m_rxBuffer[size + 4], m_rxCount - (size + 4));

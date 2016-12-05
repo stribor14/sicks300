@@ -128,7 +128,8 @@ void SickS300::update()
 
     if(serial_comm_.getProtocolNumber() == 0x0103){
         int temp_time = serial_comm_.getScanNumber();
-        scan_data_.header.stamp = ros::Time::fromSec(0.04 * temp_time);
+        scan_data_.header.stamp = ros::Time(0.04 * temp_time);
+        ROS_INFO("%d",temp_time);
     }
     else {
         scan_data_.header.stamp = ros::Time::now();
