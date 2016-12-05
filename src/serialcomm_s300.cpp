@@ -271,21 +271,21 @@ int SerialCommS300::readData()
       return -1;
 
     // determine which protocol is used
-    unsigned short protocol = (*reinterpret_cast<unsigned short *> (&m_rxBuffer[10]));
-    if (protocol != PROTOCOL_1_02 && protocol != PROTOCOL_1_03)
+    m_protocol = (*reinterpret_cast<unsigned short *> (&m_rxBuffer[10]));
+    if (m_protocol != PROTOCOL_1_02 && m_protocol != PROTOCOL_1_03)
     {
-        std::cout << "SerialCommS300: protocol version " << std::hex << protocol << std::dec << " is unsupported\n";
+        std::cout << "SerialCommS300: protocol version " << std::hex << m_protocol << std::dec << " is unsupported\n";
         return -1;
     }
 
     // read & calculate checksum according to the protocol
     unsigned short packet_checksum, calc_checksum;
-    if (protocol == PROTOCOL_1_02)
+    if (m_protocol == PROTOCOL_1_02)
     {
         packet_checksum = *reinterpret_cast<unsigned short *> (&m_rxBuffer[size + 2]);
         calc_checksum = createCRC(&m_rxBuffer[4], size - 2);
     }
-    else if (protocol == PROTOCOL_1_03)
+    else if (m_protocol == PROTOCOL_1_03)
     {
         packet_checksum = *reinterpret_cast<unsigned short *> (&m_rxBuffer[size + 12]);
         calc_checksum = createCRC(&m_rxBuffer[4], size + 8);
@@ -313,9 +313,9 @@ int SerialCommS300::readData()
         else if (data[0] == 0xBB)
         {
           int data_count;
-    	  if (protocol == PROTOCOL_1_02)
+          if (m_protocol == PROTOCOL_1_02)
               data_count = (size - 22) / 2;
-          else if (protocol == PROTOCOL_1_03)
+          else if (m_protocol == PROTOCOL_1_03)
               data_count = (size - 12) / 2;
 
           if (data_count < 0)
@@ -337,6 +337,11 @@ int SerialCommS300::readData()
             unsigned short distance_cm = (*reinterpret_cast<unsigned short *> (&data[4 + 2 * ii]));
             distance_cm &= 0x1fff; // remove status bits
             m_ranges[ii] = static_cast<double> (distance_cm) / 100.0;
+          }
+
+          // if protocol version allows it, read Scan number (time stamp)
+          if(m_protocol == PROTOCOL_1_03){
+              m_scanNumber = htonl(*reinterpret_cast<unsigned int *> (&m_rxBuffer[14]));
           }
 
           memmove(m_rxBuffer, &m_rxBuffer[size + 4], m_rxCount - (size + 4));

@@ -78,6 +78,14 @@ public:
     return m_ranges;
   }
 
+  inline int getProtocolNumber(){
+      return m_protocol;
+  }
+
+  inline int getScanNumber(){
+      return m_scanNumber;
+  }
+
   int connect(const std::string& deviceName, unsigned int baudRate = DEFAULT_BAUD_RATE);
   int disconnect();
 
@@ -100,6 +108,9 @@ protected:
 
   float* m_ranges;
   unsigned int m_rangesCount;
+
+  unsigned short m_protocol;
+  unsigned int m_scanNumber;
 
 };
 

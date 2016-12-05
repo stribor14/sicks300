@@ -126,7 +126,13 @@ void SickS300::update()
     for (unsigned int i = start_scan_, j=0; i < end_scan_; i++, j++)
       scan_data_.ranges[j] = ranges[i];
 
-    scan_data_.header.stamp = ros::Time::now();
+    if(serial_comm_.getProtocolNumber() == 0x0103){
+        int temp_time = serial_comm_.getScanNumber();
+        scan_data_.header.stamp = ros::Time::fromSec(0.04 * temp_time);
+    }
+    else {
+        scan_data_.header.stamp = ros::Time::now();
+    }
 
     scan_data_publisher_.publish(scan_data_);
 
