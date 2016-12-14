@@ -5,7 +5,10 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   tf
   sensor_msgs
+  timesync
 )
+
+set(CMAKE_CXX_FLAGS "-std=c++14")
 
 catkin_package(
   INCLUDE_DIRS include
@@ -27,8 +30,11 @@ add_executable(sick300_driver src/sicks300.cpp)
 
 target_link_libraries(sick300_driver
   serialcomm_s300
+  timesync
   ${catkin_LIBRARIES}
 )
+
+add_dependencies(sick300_driver ${catkin_EXPORTED_TARGETS})
 
 install(TARGETS serialcomm_s300 sick300_driver
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
@@ -40,8 +46,3 @@ install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.h"
 )
-
-
-
-
-

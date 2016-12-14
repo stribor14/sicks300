@@ -57,6 +57,7 @@ SickS300::SickS300()
   // reading transformation parameters from parameter server
   param_node.param(std::string("frame"), scan_data_.header.frame_id, std::string("base_laser_link"));
   param_node.param(std::string("send_transform"), param, 1);
+  param_node.param("enable_time_sync", enable_Tsync, true);
   if (param)
   {
     send_transform_ = true;
@@ -103,6 +104,21 @@ SickS300::SickS300()
 
   scan_data_publisher_ = nodeHandle.advertise<sensor_msgs::LaserScan> ("laserscan", 10);
 
+  // Timestamp synchronizer default parameters
+  TimestampSynchronizer::Options defaultSyncOptions;
+  defaultSyncOptions.useMedianFilter = true;
+  defaultSyncOptions.medianFilterWindow = 2500;
+  defaultSyncOptions.useHoltWinters = true;
+  defaultSyncOptions.alfa_HoltWinters = 3e-3;
+  defaultSyncOptions.beta_HoltWinters = 2e-3;
+  defaultSyncOptions.alfa_HoltWinters_early = 1e-1;
+  defaultSyncOptions.beta_HoltWinters_early = 0.0;
+  defaultSyncOptions.earlyClamp = true;
+  defaultSyncOptions.earlyClampWindow = 500;
+  defaultSyncOptions.timeOffset = 0.0;
+  defaultSyncOptions.initialB_HoltWinters = -3e-7;
+  pstampSynchronizer = std::make_unique<TimestampSynchronizer>(defaultSyncOptions);
+
 }
 
 SickS300::~SickS300()
@@ -126,10 +142,10 @@ void SickS300::update()
     for (unsigned int i = start_scan_, j=0; i < end_scan_; i++, j++)
       scan_data_.ranges[j] = ranges[i];
 
-    if(serial_comm_.getProtocolNumber() == 0x0103){
-        int temp_time = serial_comm_.getScanNumber();
-        scan_data_.header.stamp = ros::Time(0.04 * temp_time);
-        ROS_INFO("%d",temp_time);
+    if(serial_comm_.getProtocolNumber() == 0x0103 && enable_Tsync){
+        int scanNum = serial_comm_.getScanNumber();
+        scan_data_.header.stamp = ros::Time(pstampSynchronizer->sync(0.04 * scanNum, ros::Time::now().toSec(), scanNum));
+        ROS_INFO("%f", (scan_data_.header.stamp - ros::Time::now()).toSec());
     }
     else {
         scan_data_.header.stamp = ros::Time::now();
